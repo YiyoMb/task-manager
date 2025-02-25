@@ -30,7 +30,7 @@ app.use(cors());
 app.use(express.json());
 
 const generateToken = (userId) => {
-    return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '10m' });
+    return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '60m' });
 };
 
 const verifyToken = (req, res, next) => {
@@ -174,26 +174,38 @@ app.get('/all-tasks', async (req, res) => {
     }
 });
 
-app.put("/tasks/edit", async (req, res) => {
-    const { id, name_task, description, status } = req.body;
-  
-    if (!id) {
-      return res.status(400).json({ message: "Se requiere el ID de la tarea" });
-    }
-  
+app.put('/tasks/:taskId', verifyToken, async (req, res) => {
     try {
-      await db.collection("tasks").doc(id).update({
-        name_task,
-        description,
-        status,
-      });
-  
-      res.json({ message: "Tarea actualizada correctamente" });
-    } catch (error) {
-      console.error("Error al actualizar tarea:", error);
-      res.status(500).json({ message: "Error al actualizar tarea" });
+        const { taskId } = req.params;
+        const { category, description, name_task, status, time_until_finish, remind_me } = req.body;
+
+        if (!category || !description || !name_task || !status || !time_until_finish || !remind_me) {
+            return res.status(400).json({ statusCode: 400, message: 'Todos los campos son obligatorios' });
+        }
+
+        const taskRef = db.collection('task').doc(taskId);
+        const doc = await taskRef.get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ statusCode: 404, message: 'Tarea no encontrada' });
+        }
+
+        await taskRef.update({
+            category,
+            description,
+            name_task,
+            status,
+            time_until_finish,
+            remind_me,
+            updated_at: new Date().toISOString(),
+        });
+
+        res.status(200).json({ statusCode: 200, message: 'Tarea actualizada con éxito' });
+
+    } catch (err) {
+        res.status(500).json({ statusCode: 500, message: 'Error al actualizar la tarea', error: err.message });
     }
-  });
+});
 
   app.delete("/tasks/delete", async (req, res) => {
     const { id } = req.body;
@@ -203,7 +215,7 @@ app.put("/tasks/edit", async (req, res) => {
     }
   
     try {
-      await db.collection("tasks").doc(id).delete();
+      await db.collection("task").doc(id).delete();
       res.json({ message: "Tarea eliminada correctamente" });
     } catch (error) {
       console.error("Error al eliminar tarea:", error);

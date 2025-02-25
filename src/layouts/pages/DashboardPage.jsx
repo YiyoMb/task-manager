@@ -3,21 +3,34 @@ import { Modal, Form, Input, DatePicker, Button, message, Select } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import MainLayout from "../../layouts/MainLayout";
 import axios from "axios";
+import dayjs from "dayjs"; //Formato de fechas
 
-const TaskForm = ({ visible, onCreate, onCancel, username }) => {
+const TaskForm = ({ visible, onCreate, onCancel, username, editingTask }) => {
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    if (editingTask) {
+      form.setFieldsValue({
+        ...editingTask,
+        time_until_finish: editingTask.time_until_finish ? dayjs(editingTask.time_until_finish) : null,
+        remind_me: editingTask.remind_me ? dayjs(editingTask.remind_me) : null, //Convertimos los datos de time_until_finish y remind_me a un objeto dayjs que es esperado por DatePicker
+      });
+    } else {
+      form.resetFields(); // Limpiar el formulario si no hay tarea en edición
+    }
+  }, [editingTask, form]);
 
   const onFinish = (values) => {
     // Agregar el username a los valores antes de crear la tarea
-    onCreate({ ...values, username });
+    onCreate({ ...values, username, id: editingTask?.id });
     form.resetFields();
   };
 
   return (
     <Modal
       visible={visible}
-      title="Crear Tarea"
-      okText="Crear"
+      title={editingTask ? "Editar Tarea" : "Crear Tarea"}
+      okText={editingTask ? "Actualizar" : "Crear"}
       onCancel={onCancel}
       onOk={form.submit}
     >
@@ -77,25 +90,37 @@ const TaskForm = ({ visible, onCreate, onCancel, username }) => {
 const DashboardPage = () => {
   const [visible, setVisible] = useState(false);
   const [tasks, setTasks] = useState([]);
+  const [editingTask, setEditingTask] = useState(null); // Nueva tarea en edición
   const userToken = localStorage.getItem("token"); // Obtener el token del usuario
   const username = localStorage.getItem("username"); // Obtener el username del usuario desde localStorage
 
+  //Función para crear o editar una nueva task
   const onCreate = async (values) => {
     try {
-      const response = await axios.post("http://localhost:3000/tasks", values, {
-        headers: {
-          Authorization: `Bearer ${userToken}`, // Enviar el token para autenticar la solicitud
-        },
-      });
-      message.success(response.data.message); // Mostrar mensaje de éxito
+      if(editingTask) {
+        //Actualizar la tarea existente
+        await axios.put(`http://localhost:3000/tasks/${editingTask.id}`, values, {
+          headers: { Authorization: `Bearer ${userToken}` },
+        });
+        message.success("Tarea actualizada correctamente");
+      }
+      else {
+        // Crear una nueva tarea
+        await axios.post("http://localhost:3000/tasks", values, {
+          headers: { Authorization: `Bearer ${userToken}` }, //token para autenticar la solicitud
+        });
+        message.success("Tarea creada correctamente");
+      }
       setVisible(false);
-      fetchTasks(); // Refrescar la lista de tareas
+      setEditingTask(null); // Limpiar la tarea en edición
+      fetchTasks(); // Recargar las tareas
     } catch (error) {
-      console.error("Error al crear la tarea:", error);
-      message.error("Error al crear la tarea");
+      console.error("Error al guardar la tarea:", error);
+      message.error("Error al guardar la tarea");
     }
   };
 
+  //Función para encontrar tasks
   const fetchTasks = async () => {
     try {
       const response = await axios.get(`http://localhost:3000/tasks`, {
@@ -109,6 +134,21 @@ const DashboardPage = () => {
       message.error("Error al obtener tareas");
     }
   };
+
+  //Función para eliminar Task
+  const deleteTask = async (taskId) => {
+    try {
+      await axios.delete("http://localhost:3000/tasks/delete", {
+        headers: { Authorization: `Bearer ${userToken}` },
+        data: { id: taskId },  // Enviar el ID dentro del cuerpo
+      });
+      message.success("Tarea eliminada correctamente");
+      fetchTasks();
+    } catch (error) {
+      console.error("Error al eliminar la tarea:", error);
+      message.error("Error al eliminar la tarea");
+    }
+  };  
 
   useEffect(() => {
     fetchTasks(); // Cargar las tareas al montar el componente
@@ -131,7 +171,33 @@ const DashboardPage = () => {
               <div key={task.id} style={{ border: "1px solid #d9d9d9", borderRadius: "4px", padding: "15px", margin: "10px 0", backgroundColor: "#f9f9f9" }}>
                 <h4 style={{ margin: "0 0 10px" }}>{task.name_task}</h4>
                 <p style={{ margin: "5px 0" }}>Estado: <strong>{task.status}</strong></p>
+                <Button
+                  type="default"
+                  onClick={() => {
+                    setEditingTask(task); // Guardar la tarea a editar en el estado
+                    setVisible(true); // Mostrar el modal
+                  }}
+                >
+                  Editar
+                </Button>
+                <Button
+                  type="primary"
+                  danger
+                  onClick={() => {
+                    Modal.confirm({
+                      title: "¿Estás seguro de eliminar esta tarea?",
+                      content: "Esta acción no se puede deshacer.",
+                      okText: "Sí, eliminar",
+                      okType: "danger",
+                      cancelText: "Cancelar",
+                      onOk: () => deleteTask(task.id), // Llamar la función deleteTask si el usuario confirma
+                    });
+                  }}
+                >
+                  Eliminar
+                </Button>
               </div>
+              
             ))
           ) : (
             <p>No hay tareas disponibles.</p>
@@ -140,8 +206,12 @@ const DashboardPage = () => {
         <TaskForm
           visible={visible}
           onCreate={onCreate}
-          onCancel={() => setVisible(false)}
+          onCancel={() => {
+            setVisible(false);
+            setEditingTask(null);
+          }}
           username={username} // Pasar el username al componente de formulario
+          editingTask={editingTask} //Pasar la tarea al formulario
         />
       </div>
     </MainLayout>
