@@ -44,11 +44,12 @@ const verifyToken = (req, res, next) => {
             return res.status(401).json({ statusCode: 401, message: 'Token no válido' });
         }
         req.username = decoded.userId || decoded.username;
+        req.userId = decoded.userId;
         next();
     }); 
 }; 
 
-
+//REGISTRAR NUEVO USUARIO
 app.post('/register', async (req, res) => {
     const { username, password, gmail, rol } = req.body;
     const last_login = new Date().toISOString(); 
@@ -83,6 +84,7 @@ app.post('/register', async (req, res) => {
     }
 });
 
+//LOGIN DE USUARIO
 app.post('/validate', async (req, res) => {
     const { username, password } = req.body;
 
@@ -123,8 +125,34 @@ app.post('/validate', async (req, res) => {
     }
 });
 
+//OBTENER TODOS LOS USUARIOS
+app.get('/users', async (req, res) => {
+    try {
+        // Consulta todos los usuarios de la colección 'USERS'
+        const usersSnapshot = await db.collection('USERS').get();
+        
+        // Si no hay usuarios, retornamos un mensaje indicando que no se encontraron
+        if (usersSnapshot.empty) {
+            return res.status(404).json({ statusCode: 404, message: 'No se encontraron usuarios' });
+        }
+
+        // Mapear los resultados para devolver los datos de los usuarios
+        const users = usersSnapshot.docs.map(doc => ({
+            id: doc.id, 
+            ...doc.data()
+        }));
+
+        // Retornar la lista de usuarios
+        res.status(200).json({ statusCode: 200, users });
+    } catch (err) {
+        console.error('Error al obtener usuarios:', err);
+        res.status(500).json({ statusCode: 500, message: 'Error al obtener los usuarios', error: err.message });
+    }
+});
+
 //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[      APIS TASK         ]$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+//CREAR NUEVA TASK
 app.post('/tasks', verifyToken, async (req, res) => {
     try {
         const { category, description, name_task, status, time_until_finish, remind_me } = req.body;
@@ -152,6 +180,7 @@ app.post('/tasks', verifyToken, async (req, res) => {
     }
 });
 
+//OBTENER TASK DE USUARIO
 app.get('/tasks', verifyToken, async (req, res) => {
     try {
         const username = req.username; 
@@ -164,6 +193,7 @@ app.get('/tasks', verifyToken, async (req, res) => {
     }
 });
 
+//OBTENER TODAS LAS TASK
 app.get('/all-tasks', async (req, res) => {
     try {
         const tasksSnapshot = await db.collection('task').get();
@@ -174,6 +204,7 @@ app.get('/all-tasks', async (req, res) => {
     }
 });
 
+//EDITAR TASK
 app.put('/tasks/:taskId', verifyToken, async (req, res) => {
     try {
         const { taskId } = req.params;
@@ -207,23 +238,87 @@ app.put('/tasks/:taskId', verifyToken, async (req, res) => {
     }
 });
 
-  app.delete("/tasks/delete", async (req, res) => {
-    const { id } = req.body;
+//ELIMINAR TASK
+app.delete("/tasks/delete", async (req, res) => {
+const { id } = req.body;
+
+if (!id) {
+    return res.status(400).json({ message: "Se requiere el ID de la tarea" });
+}
+
+try {
+    await db.collection("task").doc(id).delete();
+    res.json({ message: "Tarea eliminada correctamente" });
+} catch (error) {
+    console.error("Error al eliminar tarea:", error);
+    res.status(500).json({ message: "Error al eliminar tarea" });
+}
+});
+
+
+//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[      APIS GROUPS         ]$$$$$$$$$$$$$$$$$$$$$$$$$$$$
   
-    if (!id) {
-      return res.status(400).json({ message: "Se requiere el ID de la tarea" });
+//CREAR NUEVO GRUPO
+app.post('/groups', verifyToken, async (req, res) => {
+    const { groupName, description, members } = req.body;
+
+    if (!groupName || !description || !members) {
+        return res.status(400).json({ statusCode: 400, message: 'Todos los campos son obligatorios' });
     }
-  
+
+    if (typeof groupName !== 'string' || typeof description !== 'string' || !Array.isArray(members)) {
+        return res.status(400).json({ statusCode: 400, message: 'Formato de datos incorrecto' });
+    }
+
+    if (groupName.trim() === '' || description.trim() === '' || members.length === 0) {
+        return res.status(400).json({ statusCode: 400, message: 'Todos los campos deben contener datos válidos' });
+    }
+
     try {
-      await db.collection("task").doc(id).delete();
-      res.json({ message: "Tarea eliminada correctamente" });
-    } catch (error) {
-      console.error("Error al eliminar tarea:", error);
-      res.status(500).json({ message: "Error al eliminar tarea" });
+        // Creación de un nuevo grupo en Firestore
+        const groupRef = db.collection('groups');
+        const newGroup = await groupRef.add({
+            groupName: groupName.trim(),
+            description: description.trim(),
+            members,
+            createdBy: req.username, // Agregar el ID del usuario que creó el grupo
+            createdAt: new Date().toISOString(),
+        });
+
+        return res.status(201).json({ statusCode: 201, message: 'Grupo creado con éxito', groupId: newGroup.id });
+    } catch (err) {
+        console.error('Error al crear el grupo:', err);
+        return res.status(500).json({ statusCode: 500, message: 'Error al crear el grupo' });
     }
-  });
-  
-  
+});
+
+//OBTENER TODOS LOS GRUPOS
+app.get('/groups', verifyToken, async (req, res) => {
+    try {
+        // Consulta todos los grupos de la colección 'groups'
+        const groupsSnapshot = await db.collection('groups').get();
+        
+        // Si no hay grupos, retornamos un mensaje indicando que no se encontraron
+        if (groupsSnapshot.empty) {
+            return res.status(404).json({ statusCode: 404, message: 'No se encontraron grupos' });
+        }
+
+        // Mapear los resultados para devolver los datos de los grupos
+        const groups = groupsSnapshot.docs.map(doc => ({
+            id: doc.id, 
+            ...doc.data()
+        }));
+
+        // Retornar la lista de grupos
+        res.status(200).json({ statusCode: 200, groups });
+    } catch (err) {
+        console.error('Error al obtener grupos:', err);
+        res.status(500).json({ statusCode: 500, message: 'Error al obtener los grupos', error: err.message });
+    }
+});
+
+//OBTENER GRUPOS POR USUARIO
+
 
 
 app.listen(port, () => {

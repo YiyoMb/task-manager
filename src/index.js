@@ -5,6 +5,7 @@ import LandingPage from "./layouts/pages/LandingPage";
 import LoginPage from "./layouts/pages/LoginPage";
 import DashboardPage from "./layouts/pages/DashboardPage";
 import RegisterPage from "./layouts/pages/register";
+import GroupsPage from "./layouts/pages/GroupsPage";
 
 const App = () => {
   return (
@@ -14,6 +15,7 @@ const App = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/groups" element={<GroupsPage />} />
       </Routes>
     </Router>
   );

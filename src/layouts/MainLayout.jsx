@@ -1,11 +1,12 @@
 import React from "react";
 import { Layout, Menu } from "antd";
 import { Link } from "react-router-dom";
-import { DashboardOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons';
+import { DashboardOutlined, UserOutlined, SettingOutlined, TeamOutlined } from '@ant-design/icons';
 
 const { Sider, Content } = Layout;
 
 const MainLayout = ({ children }) => {
+  const username = localStorage.getItem("username");
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Sider
@@ -14,7 +15,7 @@ const MainLayout = ({ children }) => {
         style={{ borderRight: "1px solid #ddd" }}
       >
         <div style={styles.logo}>
-          <h2 style={{ color: "#fff" }}>TASK MANAGER</h2>
+          <h2 style={{ color: "#fff" }}>Bienvenido, {username}</h2>
         </div>
         <Menu theme="dark" mode="inline" defaultSelectedKeys={["1"]}>
           <Menu.Item key="1" icon={<DashboardOutlined />}>
@@ -25,6 +26,9 @@ const MainLayout = ({ children }) => {
           </Menu.Item>
           <Menu.Item key="3" icon={<SettingOutlined />}>
             <Link to="/settings">Configuraciones</Link>
+          </Menu.Item>
+          <Menu.Item key="4" icon={<TeamOutlined />}>
+            <Link to="/groups">Grupos</Link>
           </Menu.Item>
         </Menu>
       </Sider>
