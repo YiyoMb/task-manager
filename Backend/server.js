@@ -317,9 +317,102 @@ app.get('/groups', verifyToken, async (req, res) => {
     }
 });
 
-//OBTENER GRUPOS POR USUARIO
+// CREAR NUEVA TAREA EN UN GRUPO
+app.post('/groups/:groupId/groupTasks', verifyToken, async (req, res) => {
+    const { groupId } = req.params;
+    const { name, description, assignedTo, status } = req.body;
 
+    if (!name || !description || !assignedTo || !status) {
+        return res.status(400).json({ statusCode: 400, message: 'Todos los campos son obligatorios' });
+    }
 
+    try {
+        const groupRef = db.collection('groups').doc(groupId);
+        const groupDoc = await groupRef.get();
+
+        if (!groupDoc.exists) {
+            return res.status(404).json({ statusCode: 404, message: 'Grupo no encontrado' });
+        }
+
+        const groupData = groupDoc.data();
+        if (groupData.createdBy !== req.userId) {
+            return res.status(403).json({ statusCode: 403, message: 'No tienes permiso para crear tareas en este grupo' });
+        }
+
+        const taskRef = db.collection('groupTasks');
+        const newTask = await taskRef.add({
+            groupId,
+            name,
+            description,
+            status,
+            assignedTo,
+            createdBy: req.userId,
+            createdAt: new Date().toISOString(),
+        });
+
+        return res.status(201).json({ statusCode: 201, message: 'Tarea creada con éxito', taskId: newTask.id });
+    } catch (err) {
+        console.error('Error al crear la tarea:', err);
+        return res.status(500).json({ statusCode: 500, message: 'Error al crear la tarea' });
+    }
+});
+
+// OBTENER TAREAS DE UN GRUPO
+app.get('/groups/:groupId/groupTasks', verifyToken, async (req, res) => {
+    const { groupId } = req.params;
+
+    try {
+        const tasksSnapshot = await db.collection('groupTasks').where('groupId', '==', groupId).get();
+
+        if (tasksSnapshot.empty) {
+            return res.status(404).json({ statusCode: 404, message: 'No se encontraron tareas' });
+        }
+
+        const tasks = tasksSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        return res.status(200).json({ statusCode: 200, tasks });
+    } catch (err) {
+        console.error('Error al obtener las tareas:', err);
+        return res.status(500).json({ statusCode: 500, message: 'Error al obtener las tareas', error: err.message });
+    }
+});
+
+// ACTUALIZAR ESTADO DE UNA TAREA EN UN GRUPO
+app.put('/groups/:groupId/groupTasks/:taskId/status', verifyToken, async (req, res) => {
+    const { groupId, taskId } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+        return res.status(400).json({ statusCode: 400, message: 'El campo status es obligatorio' });
+    }
+
+    try {
+        const taskRef = db.collection('groupTasks').doc(taskId);
+        const taskDoc = await taskRef.get();
+
+        if (!taskDoc.exists) {
+            return res.status(404).json({ statusCode: 404, message: 'Tarea no encontrada' });
+        }
+
+        const taskData = taskDoc.data();
+        if (taskData.assignedTo !== req.userId) {
+            return res.status(403).json({ statusCode: 403, message: 'No tienes permiso para actualizar esta tarea' });
+        }
+
+        await taskRef.update({
+            status,
+            updatedAt: new Date().toISOString(),
+        });
+
+        return res.status(200).json({ statusCode: 200, message: 'Estado de la tarea actualizado con éxito' });
+    } catch (err) {
+        console.error('Error al actualizar el estado de la tarea:', err);
+        return res.status(500).json({ statusCode: 500, message: 'Error al actualizar el estado de la tarea' });
+    }
+});
 
 app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);

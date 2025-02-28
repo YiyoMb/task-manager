@@ -3,6 +3,7 @@ import { Card, Button, List, Modal, Input, Typography, Badge, Form, Select, mess
 import { PlusOutlined, UsergroupAddOutlined } from "@ant-design/icons";
 import MainLayout from "../MainLayout";
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const { Title } = Typography;
 
@@ -12,6 +13,7 @@ const GroupsPage = () => {
   const [users, setUsers] = useState([]); //Cargar la lista de usuarios
   const [form] = Form.useForm();
   const username = localStorage.getItem("username");
+  const navigate = useNavigate();
 
   const fetchGroups = async () => {
     try {
@@ -41,13 +43,6 @@ const GroupsPage = () => {
         console.error('Error al obtener usuarios:', error);
         message.error('Error al cargar usuarios');
     });
-    // Simulación de carga de grupos desde Firebase (reemplazar con la API real)
-    /*const mockGroups = [
-      { id: 1, name: "Frontend Team", isAdmin: true },
-      { id: 2, name: "Backend Team", isAdmin: false },
-      { id: 3, name: "Mobile Developers", isAdmin: true },
-    ];
-    setGroups(mockGroups);*/
 
     // Cargar todos los grupos
     fetchGroups();
@@ -86,8 +81,11 @@ const GroupsPage = () => {
         console.error('Error al crear el grupo:', error.response?.data?.message || error.message);
         message.error(error.response?.data?.message || 'Error al crear el grupo');
     }
-};  
-  
+  };
+
+  const handleViewDetails = (groupId) => {
+    navigate(`/groups/${groupId}/tasks`);
+  };
 
   return (
     <MainLayout>
@@ -109,7 +107,7 @@ const GroupsPage = () => {
             <Badge.Ribbon text={group.createdBy === username ? "Admin" : "Miembro"} color={group.createdBy === username ? "blue" : "gray"}>
               <Card
                 title={group.groupName}
-                extra={<Button type="link">Ver Detalles</Button>}
+                extra={<Button type="link" onClick={() => handleViewDetails(group.id)}>Ver Detalles</Button>}
               >
                 <p>📌 Grupo {group.createdBy === username ? "administrado por ti" : "donde eres miembro"}.</p>
               </Card>

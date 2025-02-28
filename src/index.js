@@ -6,6 +6,7 @@ import LoginPage from "./layouts/pages/LoginPage";
 import DashboardPage from "./layouts/pages/DashboardPage";
 import RegisterPage from "./layouts/pages/register";
 import GroupsPage from "./layouts/pages/GroupsPage";
+import GroupsTasksPage from "./layouts/pages/GroupsTasksPage";
 
 const App = () => {
   return (
@@ -16,6 +17,7 @@ const App = () => {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/groups" element={<GroupsPage />} />
+        <Route path="/groups/:groupId/tasks" element={<GroupsTasksPage />} />
       </Routes>
     </Router>
   );
