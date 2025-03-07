@@ -2,10 +2,30 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Card, Button, Modal, Input, Typography, Form, Select, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import MainLayout from "../MainLayout";
 import axios from 'axios';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 const { Title } = Typography;
+
+// Definir los estados como constantes para evitar errores de tipeo
+const STATUS_TODO = "Por Hacer";
+const STATUS_IN_PROGRESS = "En Progreso";
+const STATUS_DONE = "Finalizada";
+
+// Mapeo de estados a IDs seguros para react-beautiful-dnd
+const statusToId = {
+  [STATUS_TODO]: "todo",
+  [STATUS_IN_PROGRESS]: "in_progress",
+  [STATUS_DONE]: "done"
+};
+
+// Mapeo inverso para obtener el estado a partir del ID
+const idToStatus = {
+  "todo": STATUS_TODO,
+  "in_progress": STATUS_IN_PROGRESS,
+  "done": STATUS_DONE
+};
 
 const GroupTasksPage = () => {
   const { groupId } = useParams();
@@ -75,6 +95,8 @@ const GroupTasksPage = () => {
 
   const handleUpdateTaskStatus = async (taskId, newStatus) => {
     try {
+      console.log(`Actualizando tarea ${taskId} a estado: ${newStatus}`);
+      
       await axios.put(`/groups/${groupId}/groupTasks/${taskId}/status`, {
         status: newStatus
       }, {
@@ -92,16 +114,31 @@ const GroupTasksPage = () => {
 
   const onDragEnd = (result) => {
     const { destination, source, draggableId } = result;
+    
+    console.log("Evento onDragEnd:", result);
 
+    // No hacer nada si no hay destino
     if (!destination) {
       return;
     }
 
+    // No hacer nada si se suelta en el mismo lugar
     if (destination.droppableId === source.droppableId && destination.index === source.index) {
       return;
     }
 
-    const task = tasks.find(task => task.id === draggableId);
+    // Encontrar la tarea que se está arrastrando
+    const task = tasks.find(task => String(task.id) === draggableId);
+    
+    if (!task) {
+      console.error(`No se encontró la tarea con id: ${draggableId}`);
+      message.error('Error: No se pudo encontrar la tarea');
+      return;
+    }
+
+    console.log("Tarea encontrada:", task);
+    console.log("Usuario actual:", userId);
+    console.log("Tarea asignada a:", task.assignedTo);
 
     // Verificar si el usuario actual es el asignado a la tarea
     if (task.assignedTo !== userId) {
@@ -109,11 +146,21 @@ const GroupTasksPage = () => {
       return;
     }
 
-    handleUpdateTaskStatus(draggableId, destination.droppableId);
+    // Convertir el ID del destino en un estado real
+    const newStatus = idToStatus[destination.droppableId];
+    
+    if (!newStatus) {
+      console.error(`No se pudo mapear el droppableId: ${destination.droppableId}`);
+      message.error('Error interno: Estado no reconocido');
+      return;
+    }
+
+    handleUpdateTaskStatus(draggableId, newStatus);
   };
 
   return (
-    <div>
+    <MainLayout>
+      <div>
       <Title level={2}>Tareas del Grupo</Title>
       <Button
         type="primary"
@@ -126,8 +173,8 @@ const GroupTasksPage = () => {
 
       <DragDropContext onDragEnd={onDragEnd}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          {['Por Hacer', 'En Progreso', 'Finalizada'].map((status) => (
-            <Droppable key={status} droppableId={status}>
+          {[STATUS_TODO, STATUS_IN_PROGRESS, STATUS_DONE].map((status) => (
+            <Droppable key={statusToId[status]} droppableId={statusToId[status]}>
               {(provided) => (
                 <div
                   ref={provided.innerRef}
@@ -136,7 +183,7 @@ const GroupTasksPage = () => {
                 >
                   <Title level={4}>{status}</Title>
                   {tasks.filter(task => task.status === status).map((task, index) => (
-                    <Draggable key={task.id} draggableId={task.id} index={index}>
+                    <Draggable key={String(task.id)} draggableId={String(task.id)} index={index}>
                       {(provided) => (
                         <div
                           ref={provided.innerRef}
@@ -202,14 +249,15 @@ const GroupTasksPage = () => {
             rules={[{ required: true, message: "Por favor selecciona un estado" }]}
           >
             <Select placeholder="Selecciona un estado">
-              <Select.Option value="Por Hacer">Por Hacer</Select.Option>
-              <Select.Option value="En Progreso">En Progreso</Select.Option>
-              <Select.Option value="Finalizada">Finalizada</Select.Option>
+              <Select.Option value={STATUS_TODO}>{STATUS_TODO}</Select.Option>
+              <Select.Option value={STATUS_IN_PROGRESS}>{STATUS_IN_PROGRESS}</Select.Option>
+              <Select.Option value={STATUS_DONE}>{STATUS_DONE}</Select.Option>
             </Select>
           </Form.Item>
         </Form>
       </Modal>
     </div>
+    </MainLayout>
   );
 };
 

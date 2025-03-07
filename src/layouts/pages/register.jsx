@@ -17,7 +17,7 @@ const RegisterPage = () => {
 
     const { username, password, gmail } = values;
     const last_login = new Date().toISOString();
-    const rol = "usuario";
+    const rol = "user";
 
     const payload = {
       username,

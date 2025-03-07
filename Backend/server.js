@@ -114,7 +114,11 @@ app.post('/validate', async (req, res) => {
             intMessage: 'Operación exitosa',
             data: {
                 message: 'Autenticación exitosa',
-                user: { username: user.username, gmail: user.gmail },
+                user: { 
+                    username: user.username, 
+                    gmail: user.gmail,
+                    role: user.rol,
+                },
                 token
             }
         });
@@ -147,6 +151,34 @@ app.get('/users', async (req, res) => {
     } catch (err) {
         console.error('Error al obtener usuarios:', err);
         res.status(500).json({ statusCode: 500, message: 'Error al obtener los usuarios', error: err.message });
+    }
+});
+
+// OBTENER ROL DE USUARIO
+app.get('/user/role', verifyToken, async (req, res) => {
+    try {
+        const username = req.username;
+        
+        const usersRef = db.collection('USERS');
+        const querySnapshot = await usersRef.where('username', '==', username).get();
+        
+        if (querySnapshot.empty) {
+            return res.status(404).json({ statusCode: 404, message: 'Usuario no encontrado' });
+        }
+        
+        const userData = querySnapshot.docs[0].data();
+        
+        res.status(200).json({ 
+            statusCode: 200, 
+            message: 'Rol obtenido con éxito',
+            data: { 
+                username: userData.username,
+                rol: userData.rol 
+            }
+        });
+    } catch (err) {
+        console.error('Error al obtener rol de usuario:', err);
+        res.status(500).json({ statusCode: 500, message: 'Error al obtener rol de usuario', error: err.message });
     }
 });
 
@@ -413,6 +445,10 @@ app.put('/groups/:groupId/groupTasks/:taskId/status', verifyToken, async (req, r
         return res.status(500).json({ statusCode: 500, message: 'Error al actualizar el estado de la tarea' });
     }
 });
+
+
+//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$[      APIS ADMIN       ]$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
 
 app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);

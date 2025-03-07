@@ -28,6 +28,7 @@ const LoginPage = () => {
         message.success("Inicio de sesión exitoso");
         localStorage.setItem("token", response.data.data.token); // Almacenar el token recibido en el localStorage
         localStorage.setItem("username", response.data.data.user.username); // Almacenar el username en el localStorage
+        localStorage.setItem("role", response.data.data.user.role); // Almacenar el role en el localStorage
         navigate("/dashboard"); // Redirigir al dashboard
       } else {
         setFormError("Credenciales incorrectas");
