@@ -154,6 +154,62 @@ app.get('/users', async (req, res) => {
     }
 });
 
+// ACTUALIZAR USUARIO
+app.put('/users/:id', verifyToken, async (req, res) => {
+    const { id } = req.params;
+    const { username, gmail, rol } = req.body;
+    const password = req.body.password; // Solo lo procesaremos si está presente
+
+    try {
+        const userRef = db.collection('USERS').doc(id);
+        const doc = await userRef.get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ statusCode: 404, message: 'Usuario no encontrado' });
+        }
+
+        // Crear objeto de actualización
+        const updateData = {};
+        
+        if (username) updateData.username = username;
+        if (gmail) updateData.gmail = gmail;
+        if (rol) updateData.rol = rol;
+        
+        // Solo actualizar la contraseña si se proporciona
+        if (password && password.trim() !== '') {
+            updateData.password = await bcrypt.hash(password, 10);
+        }
+
+        await userRef.update(updateData);
+        
+        res.status(200).json({ statusCode: 200, message: 'Usuario actualizado con éxito' });
+    } catch (err) {
+        console.error('Error al actualizar usuario:', err);
+        res.status(500).json({ statusCode: 500, message: 'Error al actualizar usuario', error: err.message });
+    }
+});
+
+// ELIMINAR USUARIO
+app.delete('/users/:id', verifyToken, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const userRef = db.collection('USERS').doc(id);
+        const doc = await userRef.get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ statusCode: 404, message: 'Usuario no encontrado' });
+        }
+
+        await userRef.delete();
+        
+        res.status(200).json({ statusCode: 200, message: 'Usuario eliminado con éxito' });
+    } catch (err) {
+        console.error('Error al eliminar usuario:', err);
+        res.status(500).json({ statusCode: 500, message: 'Error al eliminar usuario', error: err.message });
+    }
+});
+
 // OBTENER ROL DE USUARIO
 app.get('/user/role', verifyToken, async (req, res) => {
     try {

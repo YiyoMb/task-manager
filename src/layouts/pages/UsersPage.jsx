@@ -173,7 +173,7 @@ const UserManagement = () => {
       filters: [
         { text: "Admin", value: "admin" },
         { text: "Manager", value: "manager" },
-        { text: "User", value: "user" },
+        { text: "User", value: "usuario" },
       ],
       onFilter: (value, record) => record.rol === value,
     },
