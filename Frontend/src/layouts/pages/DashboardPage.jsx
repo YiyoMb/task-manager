@@ -99,14 +99,14 @@ const DashboardPage = () => {
     try {
       if(editingTask) {
         //Actualizar la tarea existente
-        await axios.put(`http://localhost:3000/tasks/${editingTask.id}`, values, {
+        await axios.put(`${process.env.REACT_APP_BACKEND_URL}/tasks/${editingTask.id}`, values, {
           headers: { Authorization: `Bearer ${userToken}` },
         });
         message.success("Tarea actualizada correctamente");
       }
       else {
         // Crear una nueva tarea
-        await axios.post("http://localhost:3000/tasks", values, {
+        await axios.post(`${process.env.REACT_APP_BACKEND_URL}/tasks`, values, {
           headers: { Authorization: `Bearer ${userToken}` }, //token para autenticar la solicitud
         });
         message.success("Tarea creada correctamente");
@@ -123,7 +123,7 @@ const DashboardPage = () => {
   //Función para encontrar tasks
   const fetchTasks = async () => {
     try {
-      const response = await axios.get(`http://localhost:3000/tasks`, {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/tasks`, {
         headers: {
           Authorization: `Bearer ${userToken}`, // Enviar el token para autenticar la solicitud
         },
@@ -138,7 +138,7 @@ const DashboardPage = () => {
   //Función para eliminar Task
   const deleteTask = async (taskId) => {
     try {
-      await axios.delete("http://localhost:3000/tasks/delete", {
+      await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/tasks/delete`, {
         headers: { Authorization: `Bearer ${userToken}` },
         data: { id: taskId },  // Enviar el ID dentro del cuerpo
       });

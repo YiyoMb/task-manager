@@ -15,7 +15,7 @@ const LoginPage = () => {
     setFormError(""); 
 
     try {
-      const response = await axios.post("http://localhost:3000/validate", 
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/validate`, 
         values,  // Aquí envías directamente el objeto de formulario
         {
           headers: {

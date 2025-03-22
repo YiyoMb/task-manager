@@ -37,7 +37,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get("http://localhost:3000/users", {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/users`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -72,7 +72,7 @@ const UserManagement = () => {
       if (editingUser) {
         // Actualizar usuario existente
         const response = await axios.put(
-          `http://localhost:3000/users/${editingUser.id}`,
+          `${process.env.REACT_APP_BACKEND_URL}/users/${editingUser.id}`,
           values,
           {
             headers: {
@@ -89,7 +89,7 @@ const UserManagement = () => {
       } else {
         // Crear nuevo usuario
         const response = await axios.post(
-          "http://localhost:3000/register",
+          `${process.env.REACT_APP_BACKEND_URL}/register`,
           values,
           {
             headers: {
@@ -117,7 +117,7 @@ const UserManagement = () => {
   const handleDelete = async (userId) => {
     try {
       const response = await axios.delete(
-        `http://localhost:3000/users/${userId}`,
+        `${process.env.REACT_APP_BACKEND_URL}/users/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
