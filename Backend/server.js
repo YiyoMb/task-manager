@@ -36,7 +36,10 @@ admin.firestore().collection('users').limit(1).get()
 
 const db = admin.firestore();
 
-app.use(cors()); 
+app.use(cors({
+    origin: ['https://task-manager-front-pwoo.onrender.com', 'http://localhost:3001'],
+    credentials: true
+  })); 
 app.use(express.json());
 
 const generateToken = (userId) => {
