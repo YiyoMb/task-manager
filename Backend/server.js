@@ -100,6 +100,8 @@ app.post('/register', async (req, res) => {
 //LOGIN DE USUARIO
 app.post('/validate', async (req, res) => {
     const { username, password } = req.body;
+    
+    console.log('Intento de login para:', username); // Agrega logs para depuración
 
     if (!username || !password) {
         return res.status(400).json({ statusCode: 400, intMessage: 'Se requieren username y password' });
@@ -110,19 +112,28 @@ app.post('/validate', async (req, res) => {
         const querySnapshot = await usersRef.where('username', '==', username).get();
 
         if (querySnapshot.empty) {
+            console.log('Usuario no encontrado:', username);
             return res.status(401).json({ statusCode: 401, intMessage: 'Credenciales incorrectas' });
         }
 
-        const user = querySnapshot.docs[0].data();
+        const userDoc = querySnapshot.docs[0];
+        const user = userDoc.data();
+        
+        console.log('Usuario encontrado, verificando contraseña...');
+        // Agrega un log para depuración (solo en entorno de desarrollo)
+        // console.log('Password recibido:', password, 'Password hash almacenado:', user.password);
+        
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
+            console.log('Contraseña inválida para usuario:', username);
             return res.status(401).json({ statusCode: 401, intMessage: 'Credenciales incorrectas' });
         }
 
         const token = generateToken(user.username);
-
-        return res.status(200).json({
+        
+        console.log('Login exitoso para:', username);
+        return res.json({
             statusCode: 200,
             intMessage: 'Operación exitosa',
             data: {
@@ -130,7 +141,7 @@ app.post('/validate', async (req, res) => {
                 user: { 
                     username: user.username, 
                     gmail: user.gmail,
-                    role: user.rol,
+                    rol: user.rol,  // Asegúrate de usar el mismo nombre de campo que en el registro
                 },
                 token
             }
