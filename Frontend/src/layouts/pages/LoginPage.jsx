@@ -16,26 +16,36 @@ const LoginPage = () => {
 
     try {
       const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/validate`, 
-        values,  // Aquí envías directamente el objeto de formulario
+        values,
         {
           headers: {
-            "Content-Type": "application/json",  // Especificamos el tipo de contenido
+            "Content-Type": "application/json",
           }
         }
       );
 
-      if (response.data.statusCode === 200) {
-        message.success("Inicio de sesión exitoso");
-        localStorage.setItem("token", response.data.data.token); // Almacenar el token recibido en el localStorage
-        localStorage.setItem("username", response.data.data.user.username); // Almacenar el username en el localStorage
-        localStorage.setItem("role", response.data.data.user.role); // Almacenar el role en el localStorage
-        navigate("/dashboard"); // Redirigir al dashboard
-      } else {
-        setFormError("Credenciales incorrectas");
-      }
+      message.success("Inicio de sesión exitoso");
+      localStorage.setItem("token", response.data.data.token);
+      localStorage.setItem("username", response.data.data.user.username);
+      localStorage.setItem("role", response.data.data.user.rol); // Cambiado de role a rol para coincidir con el backend
+      navigate("/dashboard");
     } catch (error) {
-      setFormError("Error en la autenticación");
-      console.error(error);
+      // Manejo de errores mejorado
+      if (error.response) {
+        // La respuesta fue recibida pero con un código de estado de error
+        if (error.response.status === 401) {
+          setFormError("Credenciales incorrectas");
+        } else {
+          setFormError(`Error en la autenticación: ${error.response.data.intMessage || 'Verifica tus datos'}`);
+        }
+      } else if (error.request) {
+        // La solicitud fue realizada pero no se recibió respuesta
+        setFormError("No se pudo conectar con el servidor. Verifica tu conexión.");
+      } else {
+        // Error al configurar la solicitud
+        setFormError("Error en la solicitud de autenticación");
+      }
+      console.error("Error completo:", error);
     } finally {
       setLoading(false);
     }
