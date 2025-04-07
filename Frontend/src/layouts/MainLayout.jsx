@@ -1,13 +1,22 @@
 import React from "react";
 import { Layout, Menu } from "antd";
-import { Link } from "react-router-dom";
-import { DashboardOutlined, UserOutlined, SettingOutlined, TeamOutlined, UsergroupAddOutlined } from '@ant-design/icons';
+import { Link, useNavigate } from "react-router-dom";
+import { DashboardOutlined, UserOutlined, SettingOutlined, TeamOutlined, UsergroupAddOutlined, LogoutOutlined } from '@ant-design/icons';
 
 const { Sider, Content } = Layout;
 
 const MainLayout = ({ children }) => {
   const username = localStorage.getItem("username");
   const role = localStorage.getItem("role");
+  const navigate = useNavigate();
+
+  // Función para cerrar sesión
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem("username");
+    localStorage.removeItem("role");
+    navigate('/');
+};
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -36,6 +45,19 @@ const MainLayout = ({ children }) => {
               </Menu.Item>
             </>
           )}
+
+          {/* Separador visual */}
+          <Menu.Divider />
+
+          {/* Opción para cerrar sesión */}
+          <Menu.Item
+            key="logout"
+            icon={<LogoutOutlined />}
+            style={{ position: "absolute", bottom: "0", width: "100%" }}
+            onClick={handleLogout}
+          >
+            Cerrar sesión
+          </Menu.Item>
         </Menu>
       </Sider>
       <Layout>
