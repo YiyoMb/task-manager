@@ -118,7 +118,8 @@ app.post('/validate', async (req, res) => {
 
         const userDoc = querySnapshot.docs[0];
         const user = userDoc.data();
-        
+        const userId = userDoc.id;
+
         console.log('Usuario encontrado, verificando contraseña...');
         // Agrega un log para depuración (solo en entorno de desarrollo)
         // console.log('Password recibido:', password, 'Password hash almacenado:', user.password);
@@ -138,7 +139,8 @@ app.post('/validate', async (req, res) => {
             intMessage: 'Operación exitosa',
             data: {
                 message: 'Autenticación exitosa',
-                user: { 
+                user: {
+                    id: userId,
                     username: user.username, 
                     gmail: user.gmail,
                     rol: user.rol,  // Asegúrate de usar el mismo nombre de campo que en el registro

@@ -15,6 +15,7 @@ const MainLayout = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem("username");
     localStorage.removeItem("role");
+    localStorage.removeItem("userId");
     navigate('/');
 };
 

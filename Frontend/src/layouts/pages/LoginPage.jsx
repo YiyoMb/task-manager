@@ -27,7 +27,9 @@ const LoginPage = () => {
       message.success("Inicio de sesión exitoso");
       localStorage.setItem("token", response.data.data.token);
       localStorage.setItem("username", response.data.data.user.username);
-      localStorage.setItem("role", response.data.data.user.rol); // Cambiado de role a rol para coincidir con el backend
+      localStorage.setItem("role", response.data.data.user.rol);
+      localStorage.setItem("userId", response.data.data.user.id);
+
       navigate("/dashboard");
     } catch (error) {
       // Manejo de errores mejorado
