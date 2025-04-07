@@ -38,7 +38,7 @@ const GroupTasksPage = () => {
 
   const fetchTasks = async () => {
     try {
-      const response = await axios.get(`/groups/${groupId}/groupTasks`, {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/groups/${groupId}/groupTasks`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -52,7 +52,7 @@ const GroupTasksPage = () => {
 
   useEffect(() => {
     // Cargar todos los usuarios
-    axios.get('/users', {
+    axios.get(`${process.env.REACT_APP_BACKEND_URL}/users`, {
         headers: {
             'Authorization': `Bearer ${token}`
         }
@@ -73,7 +73,7 @@ const GroupTasksPage = () => {
     try {
         const { name, description, assignedTo, status } = values;
 
-        await axios.post(`/groups/${groupId}/groupTasks`, {
+        await axios.post(`${process.env.REACT_APP_BACKEND_URL}/groups/${groupId}/groupTasks`, {
             name,
             description,
             assignedTo,
@@ -97,7 +97,7 @@ const GroupTasksPage = () => {
     try {
       console.log(`Actualizando tarea ${taskId} a estado: ${newStatus}`);
       
-      await axios.put(`/groups/${groupId}/groupTasks/${taskId}/status`, {
+      await axios.put(`${process.env.REACT_APP_BACKEND_URL}/groups/${groupId}/groupTasks/${taskId}/status`, {
         status: newStatus
       }, {
         headers: {

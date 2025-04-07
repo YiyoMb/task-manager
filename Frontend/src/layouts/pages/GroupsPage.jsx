@@ -68,7 +68,7 @@ const GroupsPage = () => {
             members,
         };
 
-        await axios.post('/groups', cleanedValues, {
+        await axios.post(`${process.env.REACT_APP_BACKEND_URL}/groups`, cleanedValues, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`,
             },

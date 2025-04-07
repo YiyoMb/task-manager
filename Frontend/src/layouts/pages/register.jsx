@@ -28,7 +28,7 @@ const RegisterPage = () => {
     };
 
     try {
-      const response = await axios.post("/register", payload, {
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/register`, payload, {
         headers: { "Content-Type": "application/json" },
       });
 
